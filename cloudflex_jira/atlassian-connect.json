@@ -1,0 +1,47 @@
+{
+    "key": "kr.osci.apps.flex_jira",
+    "name": "Flexible User License for jira",
+    "description": "Flexible User License for Jira Cloud",
+    "baseUrl": "{{localBaseUrl}}",
+    "links": {
+        "self": "{{localBaseUrl}}/atlassian-connect.json",
+        "homepage": "{{localBaseUrl}}/atlassian-connect.json"
+    },
+    "apiMigrations": {
+        "context-qsh": true
+    },
+    "authentication": {
+        "type": "jwt"
+    },
+    "lifecycle": {
+        "installed": "/installed"
+    },
+    "enableLicensing":true,
+    "vendor": {
+        "name": "OpenSourceConsulting",
+        "url": "https://osci.kr"
+    },
+    "scopes":["READ","ADMIN"],
+    "version": "1.0.0",
+    "modules": {
+        "generalPages": [
+            {
+                "key": "flex-admin-page-jira-general",
+                "url": "/init",
+                "name": {
+                    "value": "Flexible User License"
+                },
+                "location": "system.top.navigation.bar",
+                "icon": {
+                    "width": 16,
+                    "height": 16,
+                    "url": "/images/pluginLogo.png"
+                },
+                "conditions":[
+                    /*{"condition":"addon_is_licensed"},*/
+                    {"condition":"user_is_admin"}
+                ]
+            }
+        ]
+    }
+}

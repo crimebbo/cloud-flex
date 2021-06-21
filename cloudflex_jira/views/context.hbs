@@ -1,0 +1,28 @@
+
+<h2>Context</h2>
+
+<h3>AP.context.getContext()</h3>
+<div id="ap-context-get-context-container"></div>
+<div class="button-container">
+  <button id="refresh-context" class="aui-button">Get context</button>
+</div>
+
+<h3>AP.context.getToken()</h3>
+<div id="ap-context-get-token-container"></div>
+<div class="button-container">
+  <button id="refresh-token" class="aui-button">Get token</button>
+  &nbsp;
+  <button id="send-token" class="aui-button">Send token</button>
+</div>
+<br/>
+<div id="ap-context-send-token-response-container"></div>
+
+<script>
+  $(window).load(function() {
+      fillOutGetContextElement('ap-context-get-context-container');
+      fillOutWithTokenElement('ap-context-get-token-container');
+      bindBindRefreshContextClickHandler('refresh-context', 'ap-context-get-context-container');
+      bindBindRefreshTokenClickHandler('refresh-token', 'ap-context-get-token-container');
+      bindBindSendTokenClickHandler('send-token', 'ap-context-send-token-response-container');
+  });
+</script>

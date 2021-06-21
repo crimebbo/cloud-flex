@@ -1,0 +1,1018 @@
+{{!< layout}}
+<div v-clock class="aui-page-panel flx-cloud" id="flx">
+  <h1 style="margin-bottom: 40px;">Flexible User License</h1>
+  <div
+    style="display: none; position: fixed; top: 0; right: 0; z-index: 10; width: 300px; height: 500px; background-color: gray; overflow-y: auto;">
+    <pre>
+      \{{entityService}}
+    </pre>
+
+  </div>
+
+  {{!-- intro --}}
+  <div :class="['flx-intro', {'is-hidden': currentTab !== 'intro' }]">
+    <h2 v-html="$t('intro.tit')">Welcome to Flexible User License!</h2>
+    {{!-- 영문 / 국문 링크 주소 떄문에 분리 --}}
+    <p v-if="currentLang === 'ko_KR'">Flexible User License는 라이선스 그룹의 사용자 수를 유연하게 관리하여 사용자 수 증감에 효과적으로 대응할 수 있습니다.<br>
+      먼저, <a :href="startInfoUrl" target="_blank">시작 안내서</a>를 읽은 후
+      Flexible User License 시작을 권장합니다.</p>
+
+    <p v-else>
+      Flexible User License allows you to flexibly manage the number of users in the license group, effectively
+      responding to
+      an increase or decrease in the number of users.<br> Please read the <a :href="startInfoUrl" target="_blank">Getting
+        Started Guide</a> before starting Flexible User
+      License.
+    </p>
+
+    <h3 class="flx-intro__sub-tit">[ \{{$t('intro.titSub')}} ]</h3>
+    <dl class="flx-intro__setting">
+      <div class="flx-intro__setting-item">
+        <dt>\{{$t('intro.listTit1')}}</dt>
+        <dd>\{{$t('intro.item1')}}</dd>
+      </div>
+      <div class="flx-intro__setting-item">
+        <dt>\{{$t('intro.listTit2')}}</dt>
+        <dd>\{{$t('intro.item2')}}</dd>
+      </div>
+      <div class="flx-intro__setting-item">
+        <dt>\{{$t('intro.listTit3')}}</dt>
+        <dd>\{{$t('intro.item3')}}</dd>
+      </div>
+      <div class="flx-intro__setting-item">
+        <dt>\{{$t('intro.listTit4')}}</dt>
+        <dd>\{{$t('intro.item4')}}</dd>
+      </div>
+    </dl>
+
+    <div class="flx-intro__btns">
+      <a :href="startInfoUrl" target="_blank">\{{$t('btns.introGuide')}}</a>
+      <button class="aui-button aui-button-primary" :data-locname="whereDoIGo"
+        @click="goToPage">\{{$t('btns.introStart')}}</button>
+    </div>
+  </div>
+  {{!-- // intro --}}
+
+  {{!-- tab content --}}
+  <div :class="['flx-panel', {'is-hidden': currentTab === 'intro' }]">
+    <!-- tab -->
+    <div class="aui-tabs horizontal-tabs flx-tab-con">
+      <!-- tab list -->
+
+      <ul class="tabs-menu flx-tab">
+        <li class="menu-item active-tab">
+          <a :class="{'disabled' : !isSetAll}" href="#summary" @click="setHelpTabStatus">\{{ $t('tabs.summary') }}</a>
+        </li>
+        <li class="menu-item">
+          <a :class="{'disabled' : !isSetAPI}" href="#group" @click="setHelpTabStatus">\{{ $t('tabs.group') }}</a>
+        </li>
+        <li class="menu-item">
+          <a :class="{'disabled' : !isSetAll}" href="#auto" @click="setHelpTabStatus">\{{ $t('tabs.auto') }}</a>
+        </li>
+        <li class="menu-item">
+          <a :class="{'disabled' : !isSetAll}" href="#force" @click="setHelpTabStatus">\{{ $t('tabs.force') }}</a>
+        </li>
+        <li class="menu-item">
+          <a href="#api" @click="setHelpTabStatus">\{{ $t('tabs.api') }}</a>
+        </li>
+      </ul>
+      <!-- // tab list -->
+
+      <!-- tab content -->
+      <!-- =============================== Dashboard =============================== -->
+      <!-- 
+        hooks: .not-has-entity
+        를 가지면 warning 메시지 보임
+      -->
+      <div id="summary" class="tabs-pane active-pane flx-tab-pane flx-dashboard not-has-entity">
+        <h2 class="a11y">Flex user dashboard</h2>
+        {{!-- warning message --}}
+        <div class="aui-message aui-message-warning aui-message--flx" id="warningMsg" v-if="displaySettingWarning">
+          <p>\{{$t('dashboard.warningMsg')}}</p>
+
+          <a class="aui-button aui-button-primary" href="#" id="btn_getStart"
+            @click="onTouchStart">\{{$t('btns.setNow')}}</a>
+        </div>
+        {{!-- warning message --}}
+
+        <p class="flx-refresh-time">
+            <time class="js-dash-time" v-bind:datetime="currentTime">\{{currentTime}}</time>
+          <button class="aui-button aui-button-link flx-refresh" @click="onclickRefresh">
+            <span class="aui-icon aui-icon-small aui-iconfont-refresh">Insert meaningful text here for
+              accessibility</span>
+            <span class="lang-dash-btn-refresh">\{{ $t('btns.refresh')}}</span>
+          </button>
+        </p>
+
+        <main class="flx-main">
+          <!-- chart -->
+          <section class="flx-chart flx-dash-row">
+
+            <comp-chart type="license" v-bind:title="$t('dashboard.chartTitle.license')"
+              v-bind:info="'dashboard.licenseInfo'" v-bind:list="summary[0]"
+              v-bind:unit="{top: $t('units.licenseUsed'), bottom: $t('units.licenseRemain')}">
+            </comp-chart>
+            <comp-chart type="register" v-bind:title="$t('dashboard.chartTitle.user')"
+              v-bind:info="'dashboard.registeredInfo'" v-bind:list="summary[1]"
+              v-bind:unit="{top: $t('units.registLicense'), bottom: $t('units.registUnLicense')}">
+            </comp-chart>
+
+          </section><!-- // chart -->
+
+          <!-- group mapping -->
+          <section class="flx-dash-row c-card flx-dash-group">
+            <h3 class="flx-dash-tit" v-t="$t('tabs.group')">Group Mapping</h3>
+            <div class="flx-dash-group__inner">
+              <comp-summary-group-mapping v-for="group in group.info" :key="group.type" v-bind:info="group">
+              </comp-summary-group-mapping>
+            </div>
+            <a class="btn-flx-arrow" href="#group" title="go group mapping" @click="goToPage">
+              <span class="a11y">go group mapping</span>
+            </a>
+          </section><!-- // group mapping -->
+
+          <!-- auto remove & notification -->
+          <!-- 
+            is-disabled 추가시 내용 dim 처리, 문구 보임
+          -->
+          <section :class="['c-card flx-dash-row flx-dash-auto-remove', {'is-disabled': !isActiveAutoRemovePanen}]">
+
+            <header>
+              <h3 class="flx-dash-tit" v-t="$t('tabs.auto')">Auto Remove & Notification</h3>
+              <p class="lang-dash-auto-remove-disabled" v-html="$t('cautions.deactivateAutoRemove')">
+                Turn on the <em>‘Auto Remove & Notification’</em> function to view detail
+              </p>
+            </header>
+            <div class="flx-dash-auto-remove__inner">
+
+              <dl class="flx-dash-auto__column">
+                <dt class="flx-category flx-category__tit" v-t="$t('dashboard.delLicenseTit')">Remove from
+                  Licensed Group
+                </dt>
+                <dd>
+                  <ul>
+                    <li>
+                      <span class="flx-dash-auto-data-tit" v-t="$t('dashboard.loginDate')">Last Active</span>
+                      <span>
+                        <em class="flx-dash-auto-data-val"
+                          id="lastLogin_day">\{{entityService.licenseEntity.lastLogin}}</em>
+                        <span v-t="$t('units.dayago')">days ago</span>
+                      </span>
+                    </li>
+                    <li>
+                      <span class="flx-dash-auto-data-tit" v-t="$t('dashboard.tobeRemoved')">To be removed</span>
+                      <span>
+                        <em class="flx-dash-auto-data-val">
+                          \{{entityService.boardEntity.removeUsersCount}}
+                        </em>
+                        <span v-t="$t('units.users2')">User(s)</span>
+                      </span>
+                    </li>
+                    <li>
+                      <span class="flx-dash-auto-data-tit" v-t="$t('dashboard.remain')">To remain</span>
+
+                      <span>
+                        <em
+                          class="flx-dash-auto-data-val">\{{entityService.licenseEntity.countCanuseGroup - entityService.boardEntity.removeUsersCount}}</em>
+                        <span v-t="$t('units.users2')">User(s)</span>
+                      </span>
+
+                    </li>
+                  </ul>
+                </dd>
+              </dl>
+
+              <div class="flx-dash-line"></div>
+
+              <dl class="flx-dash-auto__column">
+                <dt class="flx-category flx-category__tit" v-t="$t('dashboard.emailNotiTit')">Email Notification</dt>
+                <dd>
+                  <ul>
+                    <li>
+                      <span class="flx-dash-auto-data-tit" v-t="$t('dashboard.userLen')"></span>
+                      <span>
+                        <em class="flx-dash-auto-data-val">
+                          \{{entityService.licenseEntity.notiLimit}}
+                        </em>
+                        <span v-t="$t('units.users2')">User(s)</span>
+                      </span>
+                    </li>
+                    <li class="flx-dash-noti-item">
+                      <span class="flx-dash-auto-data-tit" v-t="$t('dashboard.notiGroup')">Notification group</span>
+                      <em class="flx-dash-auto-data-val">
+                        \{{entityService.licenseEntity.notiGroup || $t('dashboard.noGroup')}}
+                      </em>
+                    </li>
+                  </ul>
+                </dd>
+              </dl>
+
+              <div class="flx-dash-line"></div>
+
+              <dl class="flx-dash-auto__column">
+                <dt class="flx-category flx-category__tit" v-t="$t('dashboard.schedule')">Schedule</dt>
+                <dd>
+                  <ul>
+                    <li>
+                      <span class="flx-dash-auto-data-tit" v-t="$t('dashboard.startTime')">Start Time</span>
+                      <em class="flx-dash-auto-data-val" id="board_scheduleTime">\{{startTime}}</em>
+                    </li>
+                    <li>
+                      <span class="flx-dash-auto-data-tit" v-t="$t('dashboard.interval')">Interval</span>
+                      <em class="flx-dash-auto-data-val"
+                        v-bind:data-term="entityService.licenseEntity.deactiveScheduleInterval"></em>
+                    </li>
+                  </ul>
+                </dd>
+              </dl>
+            </div>
+
+            <a class="btn-flx-arrow" href="#auto" title="go Auto remove & Notification" @click="goToPage">
+              <span class="a11y">go Auto remove & Notification</span>
+            </a>
+          </section>
+        </main>
+
+        <!-- TODO: hook: is-active -->
+        <div v-bind:class="['flx-spinner', {'is-active' : group.isSpinner}]"></div>
+      </div>
+
+      <!-- =============================== Group mapping =============================== -->
+      <div class="tabs-pane flx-tab-pane" id="group">
+
+        <!-- form -->
+        <form class="aui flx-form" autocomplete="off" v-on:submit.prevent>
+          <!-- Group Mapping -->
+          <fieldset class="flx-fieldset" id="group-setting-fieldset">
+            <header class="flx-header flx-header--has-btn">
+              <h2 v-t="$t('tabs.group')">Group Mapping</h2>
+              <button type="button" class="aui-button" @click="onGroupEdit(true)">
+                <span class="aui-icon aui-icon-small aui-iconfont-edit"></span> \{{$t('edit')}}</button>
+            </header>
+            <p v-t="$t('group.desc')">
+              Set the groups to User Group and/or License Group to use Flexible User License. ‘Check User Count’ button
+              to
+              see the number of users in the group.
+            </p>
+
+            <dl>
+              {{!-- user group --}}
+              <div class="flx-field">
+                <dt class="flx-field__tit">\{{$t(group.info[0].label)}}</dt>
+                <dd class="flx-field__content">
+
+                  <div class="flx-init-group-status">
+                    <p class="flx-col-lg flx-info">
+                      <em class="flx-em">\{{group.info[0].groupName || $t('dashboard.noGroup')}}</em>
+                      <input v-if="group.isEditGroup" type="text" v-bind:placeholder="$t('placeholder.findGroup')"
+                        v-bind:data-type="group.info[0].type" class="text" v-model="group.info[0].newName"
+                        @keyup="filterGroupName" />
+                    </p>
+                    <ul class="auto-complete__list" v-if="group.info[0].list.length">
+                      <li class="group-items" v-for="(item, idx) in group.info[0].list">
+                        <button type="button" @click="onSelectGroup(item.name, group.info[0].type)">
+                          \{{(item.name ? item.name : $t('placeholder.none'))}}
+                        </button>
+                      </li>
+                    </ul>
+                    <button type="button" class="aui-button aui-button-link " v-if="!group.isEditGroup"
+                      @click="showGroupUserLen(group.info[0])">
+                      <span class="aui-icon aui-icon-small aui-iconfont-refresh"></span>
+                      \{{$t('group.checkCount')}}
+                    </button>
+                  </div>
+
+                  <p class="flx-info flx-info--format" v-if="group.info[0].showUserLen">
+                    <span>\{{group.info[0].count}}</span>&nbsp;<span>User(s)</span>&nbsp;<time
+                      v-bind:datetime="group.info[0].day">\{{group.info[0].day}}</time>
+                  </p>
+                  <p class="flx-error" v-if="!group.info[0].isCorrect">
+                    <span class="aui-icon aui-icon-small aui-iconfont-error aui-icon-notification"></span>
+                    <span>\{{$t(group.info[0].warningMessage)}}</span>
+                  </p>
+                  <p class="flx-info">\{{$t(group.info[0].desc)}}</p>
+                </dd>
+              </div>{{!-- // user group --}}
+
+              {{!-- license group --}}
+              <div class="flx-field">
+                <dt class="flx-field__tit">\{{$t(group.info[1].label)}}</dt>
+                <dd class="flx-field__content">
+
+                  <div class="flx-init-group-status">
+                    <p class="flx-col-lg flx-info">
+                      <em class="flx-em">\{{group.info[1].groupName || $t('dashboard.noGroup')}}</em>
+                      <input v-if="group.isEditGroup" type="text" v-bind:placeholder="$t('placeholder.findGroup')"
+                        v-bind:data-type="group.info[1].type" class="text" v-model="group.info[1].newName"
+                        @keyup="filterGroupName" />
+                    </p>
+                    <ul class="auto-complete__list" v-if="group.info[1].list.length">
+                      <li class="group-items" v-for="(item, idx) in group.info[1].list">
+                        <button type="button" @click="onSelectGroup(item.name, group.info[1].type)">
+                          \{{(item.name ? item.name : $t('placeholder.none'))}}
+                        </button>
+                      </li>
+                    </ul>
+                    <button type="button" class="aui-button aui-button-link " v-if="!group.isEditGroup"
+                      @click="showGroupUserLen(group.info[1])">
+                      <span class="aui-icon aui-icon-small aui-iconfont-refresh"></span>
+                      \{{$t('group.checkCount')}}
+                    </button>
+                  </div>
+
+                  <p class="flx-info flx-info--format" v-if="group.info[1].showUserLen">
+                    <span>\{{group.info[1].count}}</span>&nbsp;<span>User(s)</span>&nbsp;<time
+                      v-bind:datetime="group.info[1].day">\{{group.info[1].day}}</time>
+                  </p>
+                  <p class="flx-error" v-if="!group.info[1].isCorrect">
+                    <span class="aui-icon aui-icon-small aui-iconfont-error aui-icon-notification"></span>
+                    <span>\{{$t(group.info[1].warningMessage)}}</span>
+                  </p>
+                  <p class="flx-info">\{{$t(group.info[1].desc)}}</p>
+                </dd>
+              </div>
+              {{!-- // license group --}}
+            </dl>
+
+            <div class="flx-submit-btns" v-if="group.isEditGroup">
+              <button type="button" class="aui-button aui-button-primary lang-btn-save" @click="onSubmitGroupName"
+                v-t="$t('btns.save')">Save</button>
+              <button type="button" class="aui-button aui-button-link lang-btn-cancel" @click="onGroupEdit(false)"
+                v-t="$t('btns.cancel')">Cancel</button>
+            </div>
+          </fieldset>
+          <!-- // set usr group -->
+
+          <hr v-if="!group.isEditGroup" />
+
+          <!-- Check group assignment -->
+          <fieldset class="flx-fieldset group-assignment" v-if="!group.isEditGroup">
+            <h2 class="flx-header" v-t="$t('group.groupConfirm')">Check Group Assignment</h2>
+            <p v-t="$t('group.groupConfirmDesc')">Check whether the user is assigned to User Group or
+              Licensed Group(Or to both). Freely Add or remove the users to/from Licensed.</p>
+
+            <dl>
+              <div class="flx-field">
+                <dt class="flx-field__tit">
+                  <label for="user-status-name" v-t="$t('group.userName')">User name</label>
+                </dt>
+                <dd class="flx-field__content">
+                  <div class="auto-complete auto-complete--inline">
+                    <input class="flx-input text" type="text" v-model="group.findUserName"
+                      v-bind:disabled="isEditUserAssign" v-bind:placeholder="$t('placeholder.findName')"
+                      @keyup="filterUserName" />
+                    <ul class="auto-complete__list" v-if="group.userList.length">
+                      <li class="group-items" v-for="(item, idx) in group.userList">
+                        <button type="button" @click="onSelectUserNm(item)">
+                          \{{(item.publicName ? item.publicName : $t('placeholder.none'))}}
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                  <button type="button" class="aui-button" v-bind:disabled="!activateUserState"
+                    v-t="$t('group.checkUserState')" @click="onTouchChekuser">Check User State</button>
+                  <p id="group-test-msg" class="is-empty"></p>
+                  <p class="hidden flx-error lang-caution" data-category="name-user" id="username_warnText"><span
+                      class="aui-icon aui-icon-small aui-iconfont-error aui-icon-notification"></span>You must enter a
+                    username.</p>
+                  <p class="flx-info" v-t="$t('group.userStateDesc')">Click ‘Check User State’ and see whether the user
+                    is
+                    assigned to
+                    User Group or Licensed Group(Or to both).</p>
+                </dd>
+              </div>
+            </dl>
+            <table class="aui flx-table">
+              <thead>
+                <tr>
+                  <th v-t="$t('group.table.titUser')" scope="col">User</th>
+                  <th v-t="$t('group.table.titName')" scope="col">Username</th>
+                  <th v-t="$t('group.table.titGroup1')" scope="col">User Group</th>
+                  <th v-t="$t('group.table.titGroup2')" scope="col">Licensed Group</th>
+                  <th v-t="$t('group.table.titAction')" scope="col">Action</th>
+                </tr>
+              </thead>
+              <tbody id="tbody_checkGroup">
+                <tr class="js-user-name-loading" v-if="group.isPending">
+                  <td colspan="5">
+                    <span class="blue-spin blue-spin-inline"></span>
+                  </td>
+                </tr>
+                <tr v-else-if="group.assign.length && !group.isPending && group.finduserNameList[0]">
+                  <td id="check_User">\{{group.finduserNameList[0].displayName}}</td>
+                  <td id="check_UserName">\{{group.finduserNameList[0].publicName}}</td>
+                  <td id="data_catagory_user">
+                    <span :class="['aui-icon aui-icon-small', isAssignedUserGroup]"></span>
+                    <span
+                      id="checkUserAssinged">\{{$t(group.assign[0] ? 'placeholder.assign' : 'placeholder.unAssign')}}</span>
+                  </td>
+                  <td id="data_catagory_licence">
+                    <span :class="['aui-icon aui-icon-small', isAssignedLicenseGroup]"></span>
+                    <span
+                      id="checklicenceAssinged">\{{$t(group.assign[1] ? 'placeholder.assign' : 'placeholder.unAssign')}}</span>
+                  </td>
+                  <td>
+                    <button v-if="group.assign[1]" class="aui-button aui-button-link" v-t="$t('group.table.remove')"
+                      @click="removeMemberToGroup">Remove from Licensed Group</button>
+                    <button v-else class="aui-button aui-button-link" v-t="$t('group.table.add')"
+                      @click="addMemberToGroup">Add to Licensed Group</button>
+                  </td>
+                </tr>
+                <tr id="checkGroup-nouser" v-else>
+                  <td colspan="5" class="no-table-data" v-t="$t('group.table.notFound')">No user found</td>
+                </tr>
+              </tbody>
+            </table>
+          </fieldset>
+          <!-- // Check group assignment -->
+        </form>
+        <!-- // form -->
+      </div>
+      <!-- // Group mapping -->
+
+      <!-- =============================== auto remove =============================== -->
+      <div class="tabs-pane flx-schedule flx-tab-pane" id="auto">
+        {{!-- <div class="aui-message aui-message-warning flx-message-panel">
+          <p v-t="$t('autoRemove.warning')">The ‘Auto Remove & Notification’ feature requires
+            the ‘Licensed Group’ setting on ‘Group Setting’ menu in advance.</p>
+        </div> --}}
+        <form class="aui flx-form" autocomplete="off">
+          <div class="flx-schedule__btns">
+            <span class="aui-buttons flx-schedule-toggle">
+              <button class="aui-button" v-bind:aria-pressed="isActiveAutoRemovePanen ? true : false" type="button"
+                @click="activeAutoRemovePanel(true)" v-t="$t('btns.on')">On</button>
+              <button class="aui-button" v-bind:aria-pressed="isActiveAutoRemovePanen ? false : true" type="button"
+                @click="activeAutoRemovePanel(false)" v-t="$t('btns.off')">Off</button>
+            </span>
+          </div>
+          <p v-if="currentLang === 'ko_KR'" class="flx-desc-notification">
+            현재 자동 삭제 및 알림 기능은 <em>\{{activateStatus}}</em>되어 있습니다. <span v-if="!isActiveAutoRemovePanen">활성화 하면</span>
+            라이선스 그룹의 사용자
+            수를 설정된 일정에 따라 자동으로 줄여주고 라이선스 그룹의 사용자 수 변동에 대한 이메일 알림을 받을 수 있습니다.
+          </p>
+          <p v-else class="flx-desc-notification">
+            ‘Auto Remove & Notification function’ is currently <em>\{{activateStatus}}</em> Turn on the ‘Auto Remove &
+            Notification function’ to reduce the number of users in Licensed Group on schedule. Receive email
+            notification about the user count change.
+          </p>
+          <!-- schedule on -->
+          <div class="js-flx-schedule__panel" v-if="isActiveAutoRemovePanen">
+            <!-- delete from Licensed group -->
+            <header class="flx-header flx-header--has-btn">
+              <h2 v-t="$t('tabs.auto')">Auto Remove & Notification Setting</h2>
+              <button class="aui-button" type="button" v-if="!schedule.isEdit" @click="editSchedulePanel(true)">
+                <span class="aui-icon aui-icon-small aui-iconfont-edit"></span>
+                \{{$t('edit')}}
+              </button>
+            </header>
+
+            <!-- remove user from licensed group -->
+            <fieldset class="flx-fieldset">
+              <h3 v-t="$t('autoRemove.titRemoveLicense')">Remove from Licensed Group</h3>
+              <p v-t="$t('autoRemove.desclicense')">
+                Users who have no activity records for the set period of time will automatically be removed from
+                Licensed Group.
+
+              </p>
+              <dl class="flx-last-login">
+                <div class="flx-field">
+                  <dt class="flx-field__tit">
+                    <label for="input-last-login">
+                      <span v-t="$t('autoRemove.labelLastLogin')">Last Active</span>
+                      <span class="aui-icon icon-required"></span>
+                    </label>
+                  </dt>
+                  <dd class="flx-field__content last-login-row">
+                    <p class="flx-last-login__date">
+                      <span class="flx-col flx-col-sm flx-inline">
+                        <input class="text" type="number" min="1" v-model="entityService.licenseEntity.lastLogin"
+                          v-bind:placeholder="$t('placeholder.inputNum')" :disabled="!schedule.isEdit" />
+                      </span>
+                      <span class="" v-t="$t('units.dayago2')">Day(s) ago</span>
+                      <button type="button" class="aui-button aui-button-link" v-if="schedule.isEdit"
+                        @click="displayRemoveUserDesc">
+                        <span class="aui-icon aui-icon-small aui-iconfont-refresh"></span>
+                        <span v-t="$t('group.checkCount')">Check User Count</span>
+                      </button>
+                    </p>
+                    <div class="blue-spin hide" id="test-config-progress"></div>
+                    <p class="flx-error" v-if="!schedule.isCorrectDate">
+                      <span class="aui-icon aui-icon-small aui-iconfont-error aui-icon-notification"></span>
+                      <span v-t="$t('cautions.invalidenum')">You must specify a number</span>
+                    </p>
+                    <div v-if="schedule.showUserCount" class="flx-info">
+
+                      <p v-if="currentLang === 'ko_KR'">
+                        <em class="flx-caution"><span>\{{schedule.removeUserCnt}}</span>명의 구성원</em>을 삭제 예정입니다. <em
+                          class="flx-caution">총 라이선스 그룹
+                          구성원 수는 <span>\{{schedule.licenseGroupCnt}}</span>명이 됩니다.</em>
+                      </p>
+                      <p v-else>
+                        <em class="flx-caution">Will remove <span>\{{schedule.removeUserCnt}}</span></em> User(s) from
+                        Licensed Group and
+                        <em class="flx-caution">total Licensed User(s) will be
+                          <span>\{{schedule.licenseGroupCnt}}</span>.</em>
+                      </p>
+                    </div>
+                  </dd>
+                </div>
+              </dl>
+              <!-- // remove user from licensed group -->
+
+              <!-- Notification -->
+              <h3 class="flx-header" v-t="$t('autoRemove.titEmail')">Email Notification</h3>
+              <p v-t="$t('autoRemove.descemail')">Once the number of users in Licensed group exceeds the
+                maximum user count, the Notification Group users shown below will receive email notification.</p>
+
+              <dl class="flx-email-notification">
+                <div class="flx-field">
+                  <dt class="flx-field__tit">
+                    <label for="input-noti">
+                      <span>\{{$t('autoRemove.labelUserCount')}}</span>
+                      <span class="aui-icon icon-required"></span>
+                    </label>
+                  </dt>
+                  <dd class="flx-field__content">
+                    <p>
+                      <span class="flx-col flx-col-sm flx-inline">
+                        <input class="text" id="input-noti" min="1" type="number"
+                          v-model="entityService.licenseEntity.notiLimit"
+                          v-bind:placeholder="$t('placeholder.inputNum')" :disabled="!schedule.isEdit" />
+                      </span>
+                      <span class="" v-t="$t('units.users2')">User(s)</span>
+                    </p>
+                    <p class="flx-error" v-if="!schedule.isCorrectUserNum">
+                      <span class="aui-icon aui-icon-small aui-iconfont-error aui-icon-notification"></span>
+                      <span v-t="$t('cautions.invalidenum')">You must specify a number.</span>
+                    </p>
+                  </dd>
+                </div>
+                <div class="flx-field">
+                  <dt class="flx-field__tit">
+                    <label for="input-noti-group">
+                      <span>\{{$t('autoRemove.labelNotif')}}</span>
+                      <span class="aui-icon icon-required"></span>
+                    </label>
+                  </dt>
+                  <dd class="flx-field__content">
+                    <p class="flx-col flx-col-lg flx-info">
+                      <em
+                        class="flx-em">\{{entityService.licenseEntity.notiGroup.length ? entityService.licenseEntity.notiGroup : $t('dashboard.noGroup')}}</em>
+                    </p>
+                    <div class="flx-col flx-col-lg flx-init-group-status" v-if="schedule.isEdit">
+                      <input class="text" type="text" v-bind:placeholder="$t('placeholder.findGroup')"
+                        v-model="schedule.groupName" @input="filterScheduleGroup" />
+
+                      <ul class="auto-complete__list" v-if="schedule.groupList.length">
+                        <li class="group-items" v-for="(item, idx) in schedule.groupList">
+                          <button type="button" @click="onSelectNotigroup(item.name)">
+                            \{{(item.name ? item.name : $t('placeholder.none'))}}
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                    <p class="flx-error" v-if="!schedule.isFullfield">
+                      <span class="aui-icon aui-icon-small aui-iconfont-error aui-icon-notification"></span>
+                      <span v-t="$t('cautions.groupName')">You must enter a group</span>
+                    </p>
+                    <p class="flx-error" v-if="!schedule.isSpecifyGroup">
+                      <span class="aui-icon aui-icon-small aui-iconfont-error aui-icon-notification"></span>
+                      <span v-t="$t('cautions.invalidGroup')">You must specify a valid group</span>
+                    </p>
+                  </dd>
+                </div>
+              </dl>
+            </fieldset>
+            <!-- // Notification -->
+            <hr />
+            <!-- Schedule for Auto Remove & Notification -->
+            <fieldset class="flx-fieldset">
+              <header class="flx-header flx-header--has-btn">
+                <h2 class="flx-header" v-t="$t('autoRemove.titSchedule')">Schedule for Auto Remove & Notification</h2>
+                <button class="aui-button lang-btn-edit" type="button" v-if="!schedule.isEdit"
+                  @click="editSchedulePanel(true)">
+                  <span class="aui-icon aui-icon-small aui-iconfont-edit"></span>
+                  \{{$t('edit')}}
+                </button>
+              </header>
+              <p v-t="$t('autoRemove.descschedule')">Set the start time and the interval of the ‘Remove from
+                Licensed Group’ and ‘Email Notification’ functions.</p>
+
+              <dl class="flx-set-noti">
+                <div class="flx-field">
+                  <dt class="flx-field__tit">
+                    <label for="select-schedule-time" v-t="$t('autoRemove.labelStartTime')">Start Time</label>
+                  </dt>
+                  <dd class="flx-field__content">
+                    <select class="select flx-col flx-col-sm" :disabled="!schedule.isEdit"
+                      v-model="entityService.licenseEntity.deactiveScheduleHour">
+                      <option v-for="n in 24" :key="n" v-bind:value="n">\{{n | time}}</option>
+                    </select>
+                    <p class="flx-info">
+                      <em class="lang-system-date">System date :</em>
+                      <time v-bind:datetime="currentTime">\{{currentTime}}</time>
+                    </p>
+                  </dd>
+                </div>
+                <div class="flx-field">
+                  <dt class="flx-field__tit">
+                    <label for="select-schedule-day" v-t="$t('autoRemove.labelInterval')">Interval</label>
+                  </dt>
+                  <dd class="flx-field__content">
+                    <select class="select flx-col flx-col-sm lang-schedule-option" id="select-schedule-day"
+                      v-model="entityService.licenseEntity.deactiveScheduleInterval" :disabled="!schedule.isEdit">
+                      <option v-for="(option, idx) in scheduleOption" :key="option.value" v-bind:value="option.value"
+                        v-t="$t('autoRemove.' + [option.name])">\{{option.name}}</option>
+                    </select>
+                  </dd>
+                </div>
+              </dl>
+            </fieldset>
+            <!-- // Schedule for Auto Remove & Notification -->
+
+            <!-- auto remove save, cancel 버튼 -->
+            <div class="flx-submit-btns" v-if="schedule.isEdit">
+              <button class="aui-button aui-button-primary" type="button" @click="submitSchedule"
+                v-t="$t('btns.save')">Save</button>
+              <button class="aui-button aui-button-link" type="button" @click="editSchedulePanel(false)"
+                v-t="$t('btns.cancel')">Cancel</button>
+            </div>
+            <!-- // auto remove save, cancel 버튼 -->
+          </div>
+          <!-- // schedule on -->
+        </form>
+        <!-- TODO: hook: is-active -->
+        <div v-bind:class="['flx-spinner', {'is-active' : schedule.isSpinner}]"></div>
+      </div>
+      <!-- auto remove -->
+
+      <!-- force remove -->
+      <div class="tabs-pane flx-tab-pane" id="force">
+        <h2 class="flx-header lang-tit" v-t="$t('force.tit')">Force Remove User from Licensed Group</h2>
+
+        {{!-- <div class="aui-message aui-message-warning flx-message-panel js-flx-message-panel--force">
+          <p v-t="$t('force.warning')">The 'Force Remove' feature requires the 'Licensed Group' setting
+            on 'Group Setting' menu in advance.</p>
+        </div> --}}
+
+        <form class="aui flx-form" autocomplete="off">
+          <!-- force remove User -->
+          <fieldset class="flx-fieldset">
+            <p v-t="$t('force.desc')">
+              Make an immediate adjustment to the number of users in the Licensed Group to the wanted number.
+            </p>
+            <dl>
+              <div class="flx-field">
+                <dt class="flx-field__tit">
+                  <label for="reduce-value" v-t="$t('force.label')">Set User Number</label>
+                </dt>
+                <dd class="flx-field__content">
+                  <div>
+                    <p>
+                      <input class="text lang-placeholder" id="reduce-value" min="1" type="number"
+                        v-bind:placeholder="$t('placeholder.inputNum')" v-model="force.userCount" />
+                      <span class="" v-t="$t('units.users2')">User(s)</span>
+                      <button class="aui-button aui-button-primary" type="button" @click="showConfirm">
+                        \{{$t('btns.runNow')}}
+                      </button>
+                    </p>
+                    <p v-if="force.caution.length" class="flx-error" id="setUser_NumberMsg">
+                      <span class="aui-icon aui-icon-small aui-iconfont-error aui-icon-notification"></span>
+                      \{{$t(force.caution.length && 'cautions.' + force.caution)}}
+                    </p>
+                    <p class="flx-info" v-t="$t('force.descInfo')">It will remove users from whom has the oldest active
+                      date.</p>
+                    <p id="runMsg" class="is-empty"></p>
+                    <div class="blue-spin hide" id="reduce-run-sync-progress"></div>
+                  </div>
+                </dd>
+              </div>
+            </dl>
+          </fieldset>
+          <!-- force remove User -->
+        </form>
+      </div>
+      <!-- force remove -->
+
+      <!-- API info -->
+      <div class="tabs-pane flx-tab-pane" id="api">
+        <div v-if="currentLang === 'ko_KR'"
+          :class="['aui-message aui-message-warning flx-message-panel', {'is-hidden': isSetAPI }]">
+          <p><em>도메인을 인증해야 합니다.</em></p>
+          <p>API 정보와 관리자 SMTP 메일 서버 정보를 설정하려면 도메인을 인증해야 합니다. 도메인 인증 및 환경 설정이 완료되면 Flexible User License 사용이 가능합니다. <a
+              href="https://admin.atlassian.com/" target="_blank">도메인 인증</a></p>
+        </div>
+        <div v-else :class="['aui-message aui-message-warning flx-message-panel', {'is-hidden': isSetAPI }]">
+          <p><em>Verify Domain</em></p>
+          <p>
+            To set API information and SMTP mail server information, you need to verify the domain.
+            Once configuration setting is complete, you can start the Flexible User License. <a
+              href="https://admin.atlassian.com/" target="_blank">Verify Domain</a>
+          </p>
+        </div>
+        <!-- form -->
+        <form class="aui flx-form" autocomplete="off">
+          <!-- set api key, token -->
+          <fieldset class="flx-fieldset" id="group-setting-fieldset">
+            <header class="flx-header">
+              <h2>API \{{$t('setting.titApi')}}</h2>
+            </header>
+            <p v-if="currentLang === 'ko_KR'">
+              관리자 API 키와 API 토큰 정보는 Flexible User License 앱의 기능 사용을 설정하고 Atlassian Cloud 제품의 기본 인증을 수행하는 데 사용됩니다.
+            </p>
+            <p v-else>
+              The Admin API key and API token information are used to enable the features in the Flexible User License
+              and to perform
+              basic authentication of the Atlassian Cloud product.
+            </p>
+            <dl>
+              {{!-- admin api key --}}
+              <div class="flx-field">
+                <dt class="flx-field__tit"><label for="api-key">\{{$t('setting.labelAdminApi')}}</label></dt>
+                <dd class="flx-field__content flx-api-field">
+                  <div>
+                    <p class="flx-info">
+                      <input id="api-key" :disabled="flexConfig.isApiLoading" type="password" class="text"
+                        v-bind:placeholder="$t('setting.placeApiKey')" v-model="entityService.config.orgApiKey"
+                        @focus="activeConfigBtn('API')" />
+                    </p>
+                    <p v-if="currentLang === 'ko_KR'" class="flx-info">
+                      관리자 API 키 만들기 위치: <a href="https://admin.atlassian.com/" target="_blank">API 키 페이지</a>
+                    </p>
+                    <p v-else class="flx-info">Admin API Key creation location: <a href="https://admin.atlassian.com/" target="_blank">API Key Page</a>
+                    </p>
+                  </div>
+                  <span :class="['flx-api-btns', {'blind': !flexConfig.isActiveAPI}]">
+                    <button type="button" :disabled="flexConfig.isApiLoading"
+                      :class="['aui-button aui-button-primary', {'btn-loading': flexConfig.isApiLoading}]"
+                      @click="onclickOrgApiKeySave"><span>\{{$t('btns.save')}}</span></button>
+                    <button type="button" class="aui-button aui-button-link" :disabled="flexConfig.isApiLoading"
+                      @click="editConfigPanel('orgApiKey')">\{{$t('btns.cancel')}}</button>
+                  </span>
+                  <p class="flx-error" v-if="flexConfig.warnorgApiKey">
+                    <span class="aui-icon aui-icon-small aui-iconfont-error aui-icon-notification"></span>
+                    <span>\{{$t('setting.' + flexConfig.warnorgApiKey)}}</span>
+                  </p>
+                </dd>
+              </div>{{!-- // admin api key --}}
+
+              {{!-- api token --}}
+              <div class="flx-field">
+                <dt class="flx-field__tit"><label for="api-token">\{{$t('setting.labelToken')}}</label></dt>
+                <dd class="flx-field__content flx-api-field">
+                  <div>
+                    <p class="flx-info">
+                      <input id="api-token" type="password" class="text" :disabled="flexConfig.isTokenLoading"
+                        v-bind:placeholder="$t('setting.placeToken')" v-model="entityService.config.adminApiToken"
+                        @focus="activeConfigBtn('Token')" />
+                    </p>
+                    <p v-if="currentLang === 'ko_KR'" class="flx-info">
+                      API 토큰 만들기 위치: <a href="https://id.atlassian.com/manage/api-tokens" target="_blank">API 토큰 생성 및
+                        관리</a>
+                    </p>
+                    <p v-else class="flx-info">
+                      API Token creation location : <a href="https://id.atlassian.com/manage/api-tokens"
+                        target="_blank">API Token Creation and Management</a>
+                    </p>
+                  </div>
+                  <span :class="['flx-api-btns', {'blind': !flexConfig.isActiveToken}]">
+                    <button type="button" :disabled="flexConfig.isTokenLoading"
+                      :class="['aui-button aui-button-primary', {'btn-loading': flexConfig.isTokenLoading}]"
+                      @click="onclickAdminApiTokenSave"><span>\{{$t('btns.save')}}</span></button>
+                    <button type="button" class="aui-button aui-button-link" :disabled="flexConfig.isTokenLoading"
+                      @click="editConfigPanel('adminApiToken')">\{{$t('btns.cancel')}}</button>
+                  </span>
+                  <p class="flx-error" v-if="flexConfig.warnToken">
+                    <span class="aui-icon aui-icon-small aui-iconfont-error aui-icon-notification"></span>
+                    <span>잘못된 API 토큰 입니다.</span>
+                  </p>
+                </dd>
+              </div>
+              {{!-- // api token --}}
+            </dl>
+          </fieldset>
+          <!-- // set api key, token -->
+
+          <!-- set admin smtp -->
+          <fieldset class="flx-fieldset" id="group-setting-fieldset">
+            <header class="flx-header">
+              <h2>SMTP \{{$t('setting.titSMTP')}}</h2>
+            </header>
+            <p v-if="currentLang === 'ko_KR'">
+              SMTP 메일 서버는 Flexible User License 앱에 대한 이메일 알림을 전송할 때 사용됩니다. G Suite 또는 구글 계정으로 인증이 가능합니다.
+            </p>
+            <p v-else>
+              The SMTP mail server is used to send email notifications for the Flexible User License. You can authenticate it with a G Suite or Google account.
+            </p>
+            <dl>
+              {{!-- email --}}
+              <div class="flx-field">
+                <dt class="flx-field__tit"><label for="admin-email">\{{$t('setting.email')}}</label></dt>
+                <dd class="flx-field__content flx-api-field">
+                  <div>
+                    <p class="flx-col-lg flx-info">
+                      <input id="admin-email" type="email" class="text" placeholder="contact@gmail.com"
+                        :disabled="flexConfig.isEmailLoading" v-model="entityService.config.authAdminEmail_id"
+                        @focus="activeConfigBtn('Email')" />
+                      <span class=" btn-input-pw">
+                        <input type="checkbox" id="visible-pw" v-model="flexConfig.isDisplaySMTPInput" @click="pwCheckEvent">
+                        <label class="aui-button aui-button-link" for="visible-pw">\{{$t('setting.showPw')}}</label>
+                      </span>
+                    </p>
+                    <p v-if="currentLang === 'ko_KR'" class="flx-info">메일 서버 접속에 사용할 이메일 주소</p>
+                    <p v-else class="flx-info">Email address to use for mail server connection</p>
+                  </div>
+                  <p class="flx-error" v-if="flexConfig.warnEmail">
+                    <span class="aui-icon aui-icon-small aui-iconfont-error aui-icon-notification"></span>
+                    <span>\{{$t('setting.' + flexConfig.warnEmail)}}</span>
+                  </p>
+                </dd>
+              </div>{{!-- // email --}}
+
+              {{!-- pw --}}
+              <div class="flx-field" v-if="flexConfig.showPasswordDisplay">
+                <dt class="flx-field__tit"><label for="admin-pw">\{{$t('setting.pw')}}</label></dt>
+                <dd class="flx-field__content flx-api-field">
+                  <div>
+                    <p class="flx-col-lg flx-info flx-pw">
+                      <input id="api-pw" :type="passwordType" class="text" @focus="activeConfigBtn('Email')"
+                        :disabled="flexConfig.isEmailLoading" v-bind:placeholder="$t('setting.placePw')"
+                        v-model="entityService.config.authAdminEmail_pw" />
+                      <button type="button" class="flx-pw-btn" @click="togglePw">
+                        <span :class="['aui-icon aui-icon-small', displayAPIPwIcon]">비밀번호
+                          \{{flexConfig.isShowPwTxt ? '가리기' : '보이기'}}</span>
+                      </button>
+                    </p>
+                    <p v-if="currentLang === 'ko_KR'" class="flx-info">메일 서버 접속에 사용할 비밀번호</p>
+                    <p v-else class="flx-info">Password to use for mail server connection</p>
+                  </div>
+                  <p class="flx-error" v-if="flexConfig.warnPw">
+                    <span class="aui-icon aui-icon-small aui-iconfont-error aui-icon-notification"></span>
+                    <span>\{{$t('setting.' + flexConfig.warnPw)}}</span>
+                  </p>
+                </dd>
+              </div>
+              {{!-- // pw --}}
+            </dl>
+            <div :class="['flx-submit-btns', {'blind': !flexConfig.isActiveEmail}]">
+              <button type="button" :disabled="flexConfig.isEmailLoading"
+                :class="['aui-button aui-button-primary', {'btn-loading': flexConfig.isEmailLoading}]"
+                @Click="onClickSendEmailSave"><span>\{{$t('btns.save')}}</span></button>
+              <button type="button" class="aui-button aui-button-link" :disabled="flexConfig.isEmailLoading"
+                @click="editConfigPanel('email')">\{{$t('btns.cancel')}}</button>
+            </div>
+          </fieldset>
+          <!-- // set admin smtp -->
+        </form>
+        <!-- // form -->
+      </div>
+      <!-- // API info -->
+      <!-- // tab content -->
+
+      <section id="member-user-count-dialog" class="aui-dialog2 aui-dialog2-medium aui-layer flx-dialog" role="dialog"
+        aria-hidden="true">
+        <header class="aui-dialog2-header">
+          <h2 class="aui-dialog2-header-main lang-tit-force-remove" v-t="$t('force.modalTit')">Force Remove User</h2>
+        </header>
+        <div class="aui-dialog2-content">
+          <!-- .hidden으로 show / hide -->
+          <p v-if="currentLang === 'ko_KR'" class="aui-message">
+            라이선스 그룹 사용자를 <em class="flx-underline">\{{force.userCount}}</em>명으로 조정합니다.
+          </p>
+          <p v-else class="aui-message">
+            <span class="lang-desc-force-remove">Are you sure you want to reduce
+              <em class="flx-underline">\{{force.userCount}}</em>
+              User(s) from licensed group?</span>
+          </p>
+        </div>
+        <footer class="aui-dialog2-footer flx-dialog-footer">
+          <div class="aui-dialog2-footer-actions">
+            <button class="aui-button aui-button-primary lang-btn-run-now" @click="submitForce"
+              v-t="$t('btns.runNow')">Run Now</button>
+            <button class="aui-button aui-button-link lang-btn-cancel" @click="cancelForce"
+              v-t="$t('btns.cancel')">Cancel</button>
+          </div>
+        </footer>
+      </section>
+    </div>
+    <!-- // tab -->
+    <!-- help panel -->
+    <div class="help-panel flx-help-panel">
+
+      <h2 class="help-panel-header" v-t="$t('help.tit')">Help Tip</h2>
+      <div v-if="currentTab === 'api'" class="help-panel-content">
+        <div v-if="currentLang === 'ko_KR'">
+          <p>API 키는 Atlassian 관리자 API를 통해 조직을 관리할 수 있습니다. <a
+              href="https://osci.atlassian.net/wiki/spaces/FUL/pages/587268102/API+Info+-" target="_blank">관리자 API에
+              대해 자세히 알아보기(도메인 인증)</a></p>
+          <p>
+            API 토큰을 사용하여 Atlassian Cloud 애플리케이션에서 기본 인증을 수행할 수 있습니다. <a
+              href="https://osci.atlassian.net/wiki/spaces/FUL/pages/587268102/API+Info+-" target="_blank">API 토큰에
+              대해
+              자세히 알아보기</a>
+          </p>
+          <p>
+            SMTP 메일 서버 인증을 통해 이메일 알림 기능을 사용할 수 있습니다. <a
+              href="https://osci.atlassian.net/wiki/spaces/FUL/pages/587268102/API+Info+-" target="_blank">SMTP 메일
+              서버에 대해 자세히 알아보기</a>
+          </p>
+        </div>
+
+        <div v-else>
+          <p>
+            Manage your organization using the Atlassian Admin API Key. <a
+              href="https://osci.atlassian.net/wiki/spaces/FUL/pages/586874883/API+Info+Manual+-+English"
+              target="_blank">Learn more about the Admin API Key (Domain Verification)</a>
+          </p>
+          <p>
+            Use API Token to perform the basic authentication in the Atlassian Cloud product. <a
+              href="https://osci.atlassian.net/wiki/spaces/FUL/pages/586874883/API+Info+Manual+-+English"
+              target="_blank">Learn more about the API Token</a>
+          </p>
+          <p>
+            Use the email notification feature with SMTP mail server authentication. <a
+              href="https://osci.atlassian.net/wiki/spaces/FUL/pages/586874883/API+Info+Manual+-+English"
+              target="_blank">Learn more about the SMTP Mail Server</a>
+          </p>
+        </div>
+      </div>
+      <div v-else class="help-panel-content">
+        <p v-t="$t('help.desc')">Flexible User License solves the license shortage issue by flexibly managing the user
+          count of the licensed group.</p>
+        <p class="lang-help-link">
+          <a v-bind:href="$t('help.href')" target="_blank" v-t="$t('help.hrefTxt')">Learn more about
+            Flexible User License</a>
+        </p>
+      </div>
+    </div>
+    <!-- // help panel -->
+  </div>{{!-- // tab content --}}
+
+  <div class="modal-wrap" v-if="isExpired">
+    <div class="modal-api">
+      <h2 v-if="currentLang === 'ko_KR'" class="modal-api__header">API KEY 유효기간 만료</h2>
+      <h2 v-else class="modal-api__header">API Key is expired!</h2>
+      <p v-if="currentLang === 'ko_KR'" class="modal-api__body">
+        관리자 API Key 유효기간이 만료되어 정보 업데이트가 필요합니다.
+        <span style="display: block; margin-top: 20px; text-align: right;"><a href="#api" @click="goToPage">환경설정으로
+            이동</a></span>
+      </p>
+      <p v-else class="modal-api__body">
+        The Admin API Key is expired, please update it from Configuration
+        menu.
+        <span style="display: block; margin-top: 20px; text-align: right;"><a href="#api" @click="goToPage">Go to
+            Configuration</a></span>
+      </p>
+      <button type="button" class="aui-button" @click="hideModal">
+        <span class="aui-icon aui-icon-small aui-iconfont-add"><span class="a11y">close</span></span>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+{{!-- 요약 차트 컴포넌트 --}}
+<script type="text/x-template" id="chart-template">
+<div class="c-card">
+  <header class="flx-chart__header">
+    <h3 class="flx-dash-tit"><span>\{{title}}</span>
+      <button type="button" v-on:mouseover="toggleInfoCallout(true)" v-on:mouseout="toggleInfoCallout(false)" class="btn-flx-info js-flx-info-btn" data-info="callout-license">
+        <span class="aui-icon aui-icon-small aui-iconfont-info-filled"></span>
+        <span class="a11y">information</span>
+      </button>
+    </h3>
+    <p id="callout-license" v-bind:class="['flx-info-call-out', chartInfoClass, {'is-active': isShow}]" v-html="$t(info)"></p>
+  </header>
+
+  <div class="flx-chart-body">
+    <div v-bind:id="'chart-' + type" v-bind:class="['chart-wrap', stateChartClass]"></div>
+    <ul class="flx-chart-legend">
+      <li class="flx-chart-legend__item">
+        <em class="flx-chart-len" id="licensedUsed">\{{list.used}}</em>
+        <span>\{{unit.top}}</span>
+      </li>
+      <li class="flx-chart-legend__item">
+        <em class="flx-chart-len" id="licensedRemained">\{{list.remain}}</em>
+        <span>\{{unit.bottom}}</span>
+      </li>
+    </ul>
+  </div>
+</div>
+</script>
+
+{{!-- 요약: 그룹설정 컴포넌트 --}}
+<script type="text/x-template" id="summary-group">
+  <div class="flx-dash-group__column">
+    <dl class="flx-category" v-bind:class="groupMappingClass">
+      <dt class="flx-category__tit">\{{$t('dashboard.' + info.type + 'Group')}}</dt>
+      <dd class="flx-dash-group__data">
+        <p>
+          <span>\{{info.count}}</span> <span v-t="$t('units.users1')">Users</span>
+        </p>
+      </dd>
+    </dl>
+    <p class="flx-dash-group__name">
+      <strong>\{{(info.groupName || $t('dashboard.noGroup'))}}</strong>
+    </p>
+  </div>
+</script>

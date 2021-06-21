@@ -1,0 +1,1 @@
+kill -9 `ps -ef | grep 'cloudflex_jira' | awk '{print $2}'`
